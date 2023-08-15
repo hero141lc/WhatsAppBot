@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp Multi-Account Bot</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+  <div class="container mt-5">
+    <h1>WhatsApp Multi-Account Bot</h1>
+    <ul class="list-group mt-3">
+      <% sessions.forEach(session => { %>
+        <li class="list-group-item">
+          <h5>Session ID: <%= session.id %></h5>
+          <% if (session.qrCodeUrl) { %>
+            <img src="<%= session.qrCodeUrl %>" alt="QR Code">
+          <% } %>
+          <% if (session.isOnline) { %>
+            <span class="badge badge-success">Online</span>
+          <% } else { %>
+            <span class="badge badge-secondary">Offline</span>
+          <% } %>
+        </li>
+      <% }); %>
+    </ul>
+    <form action="/login" method="POST">
+      <button type="submit" class="btn btn-primary mt-3">Login New Account</button>
+    </form>
+  </div>
+</body>
+</html>

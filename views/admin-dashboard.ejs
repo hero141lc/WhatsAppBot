@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理员后台</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container">
+    <a class="navbar-brand" href="#">管理员后台</a>
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="/">首页</a>
+      </li>
+      <li class="nav-item">
+        <!-- <a class="nav-link" href="/logout">注销</a> -->
+      </li>
+    </ul>
+  </div>
+</nav>
+<div class="container mt-5">
+  <ul class="nav nav-tabs" id="myTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <a class="nav-link active" id="user-tab" data-bs-toggle="tab" href="#userPanel" role="tab" aria-controls="userPanel" aria-selected="true">管理普通用户</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link" id="autoReply-tab" data-bs-toggle="tab" href="#autoReplyPanel" role="tab" aria-controls="autoReplyPanel" aria-selected="false">设置全局自动回复</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link" id="ai-tab" data-bs-toggle="tab" href="#aiPanel" role="tab" aria-controls="aiPanel" aria-selected="false">设置AI</a>
+    </li>
+  </ul>
+  <div class="tab-content mt-3" id="myTabsContent">
+    <div class="tab-pane fade show active" id="userPanel" role="tabpanel" aria-labelledby="user-tab">
+      <div class="row">
+        <div class="">
+          <div class="card">
+            <!-- 用户管理内容... -->
+ 
+                <div class="card-header">
+                  <div class="row">
+                  <div style="width: 70%;"> </div>
+                  <button class="btn btn-success" style="right: 0;margin: auto;" data-bs-toggle="modal" data-bs-target="#addUserModal">新增用户</button>
+                </div>
+                </div>
+                <div class="card-body">
+                  <ul class="list-group">
+               
+                    <% if (users.length > 0) { %>
+                      <% users.forEach(user => { %>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                          <%= user.username %>
+                          <div>
+                            <a href="#" class="btn btn-primary btn-sm mr-2 edit-user-btn" data-id="<%= user._id %>">修改</a>
+                            <a href="#" class="btn btn-danger btn-sm" onclick="deleteUser('<%= user._id %>')">删除</a>
+                          </div>
+                        </li>
+                      <% }) %>
+                    <% } else { %>
+                      <p>没有用户数据</p>
+                    <% } %>
+                  </ul>
+                  
+                </div>
+      
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane fade" id="autoReplyPanel" role="tabpanel" aria-labelledby="autoReply-tab">
+      <div class="row">
+        <div class="">
+          <div class="card">
+            <div class="card-header">   
+              <div class="row">
+                <div style="width: 70%;"> </div>
+                    <!-- 新增自动回复按钮 -->
+                   <!-- 按钮触发弹窗 -->
+                  <button class="btn btn-primary" style="right: 0;margin: auto;" data-bs-toggle="modal" data-bs-target="#autoReplyModal">
+                    新增自动回复
+                  </button>
+
+              </div>
+          
+            
+            </div>
+            <div class="card-body">
+
+          
+              <!-- 自动回复列表 -->
+              <ul class="list-group">
+                <% autoReplies.forEach(reply => { %>
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div style="width: 95%;">
+                      <strong>触发词：</strong><%= reply.triggerWord %> 
+                      <strong>回复类型：</strong><%= reply.replyType %> 
+                      <strong>回复值：</strong><%= reply.replyValue %>
+                    </div>
+              
+                    <div style="width: 110px;right: 0;margin: auto;">
+                      <a href="#" class="btn btn-primary btn-sm mr-2" data-bs-toggle="modal" data-bs-target="#editAutoReplyModal-<%= reply._id %>">修改</a>
+                      <a href="#" class="btn btn-danger btn-sm">删除</a>
+                    </div>
+                  </li>
+              
+                  <!-- 修改自动回复弹窗 -->
+                  <div class="modal fade" id="editAutoReplyModal-<%= reply._id %>" tabindex="-1" aria-labelledby="editAutoReplyModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="editAutoReplyModalLabel">修改自动回复</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                          <div class="mb-3">
+                            <label for="editTriggerWord" class="form-label">触发词</label>
+                            <input type="text" class="form-control" id="editTriggerWord" value="<%= reply.triggerWord %>">
+                          </div>
+                          <div class="mb-3">
+                            <label for="editReplyType" class="form-label">回复类型</label>
+                            <select class="form-select" id="editReplyType">
+                              <option value="text" <%= reply.replyType === 'text' ? 'selected' : '' %>>字符</option>
+                              <option value="file" <%= reply.replyType === 'file' ? 'selected' : '' %>>文件</option>
+                            </select>
+                          </div>
+                          <div class="mb-3">
+                            <label for="editReplyValue" class="form-label">回复值</label>
+                            <% if (reply.replyType === 'text') { %>
+                              <input type="text" class="form-control" id="editReplyValue" value="<%= reply.replyValue %>">
+                            <% } else if (reply.replyType === 'file') { %>
+                              <input type="file" class="form-control" id="editReplyValue">
+                            <% } %>
+                          </div>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                          <button type="button" class="btn btn-primary" onclick="editAutoReply('<%= reply._id %>')">保存修改</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+              
+                <% }) %>
+              </ul>
+              
+            </div>
+          </div>
+          
+  
+          
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane fade" id="aiPanel" role="tabpanel" aria-labelledby="ai-tab">
+      <div class="row">
+        <div class="">
+          <div class="card">
+            <!-- ai管理内容... -->
+ 
+                <div class="card-header">
+                  <div class="row">
+                  <div style="width: 70%;"> </div>
+                  <!-- <button class="btn btn-success" style="right: 0;margin: auto;" data-bs-toggle="modal" data-bs-target="#addUserModal">新增用户</button> -->
+                  <p>请尽可能详细描述需要ai扮演的角色</p>
+                </div>
+                </div>
+                <div class="card-body">
+                  
+                  <div class="container mt-5">
+                   
+                    <div id="aiConfig" contenteditable="true" style="border: 1px;border-style: solid;"><%- aiConfig.prompt %></div>
+                    <button class="btn btn-primary mt-3" id="saveButton">保存</button>
+                  </div>
+                  
+                  
+                </div>
+      
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="container mt-5">
+  <div class="row">
+
+
+  </div>
+</div>
+<!-- 弹窗内容 -->
+<div class="modal fade" id="autoReplyModal" tabindex="-1" aria-labelledby="autoReplyModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="autoReplyModalLabel">设置自动回复</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- 设置触发词 -->
+        <div class="mb-3">
+          <label for="triggerWord" class="form-label">触发词</label>
+          <input type="text" class="form-control" id="triggerWord" required>
+        </div>
+        
+        <!-- 设置回复类型 -->
+        <div class="mb-3">
+          <label for="replyType" class="form-label">回复类型</label>
+          <select class="form-select" id="replyType" required>
+            <option value="text">字符</option>
+            <option value="file">文件</option>
+          </select>
+        </div>
+        
+        <!-- 字符回复值 -->
+        <div id="textReply">
+          <label for="textValue" class="form-label">回复值</label>
+          <input type="text" class="form-control" id="textValue">
+        </div>
+        
+        <!-- 文件回复值 -->
+        <div id="fileReply" style="display: none;">
+          <label for="fileValue" class="form-label">上传文件</label>
+          <input type="file" class="form-control" id="fileValue">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+        <button type="button" class="btn btn-primary" id="saveAutoReply">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- 修改用户的弹窗 -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editModalLabel">修改用户信息</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form action="/edit_user" method="POST">
+          <input type="hidden" id="editUserId" name="id">
+          <div class="mb-3">
+            <label for="editUsername" class="form-label">用户名</label>
+            <input type="text" class="form-control" id="editUsername" name="username" required>
+          </div>
+          <div class="mb-3">
+            <label for="editPassword" class="form-label">密码</label>
+            <input type="password" class="form-control" id="editPassword" name="password" required>
+          </div>
+          <button type="submit" class="btn btn-primary">确认修改</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addUserModalLabel">新增用户</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addUserForm">
+          <div class="mb-3">
+            <label for="username" class="form-label">用户名</label>
+            <input type="text" class="form-control" id="username" name="username" required>
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">密码</label>
+            <input type="password" class="form-control" id="password" name="password" required>
+          </div>
+          <button type="submit" class="btn btn-primary">新增</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+  const aiConfigDiv = document.getElementById('aiConfig');
+  const saveButton = document.getElementById('saveButton');
+
+  saveButton.addEventListener('click', async () => {
+    const newPrompt = aiConfigDiv.textContent.trim();
+
+    try {
+      const response = await fetch('/save_ai_config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: newPrompt,
+        }),
+      });
+
+      if (response.ok) {
+        alert('配置已保存');
+      } else {
+        console.error('保存配置时出现错误');
+      }
+    } catch (error) {
+      console.error('保存配置时出现错误', error);
+    }
+  });
+});
+
+
+  async function editAutoReply(replyId) {
+    const triggerWord = document.getElementById('editTriggerWord').value;
+    const replyType = document.getElementById('editReplyType').value;
+    let replyValue = '';
+
+    if (replyType === 'text') {
+      replyValue = document.getElementById('editReplyValue').value;
+    } else if (replyType === 'file') {
+      const fileInput = document.getElementById('editReplyValue');
+      if (fileInput.files.length > 0) {
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        try {
+          const response = await fetch('/upload', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            replyValue = data.filePath;
+          } else {
+            console.error('Error uploading file');
+            return;
+          }
+        } catch (error) {
+          console.error('Error uploading file', error);
+          return;
+        }
+      }
+    }
+
+    try {
+      const response = await fetch(`/edit_auto_reply?id=${replyId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          triggerWord,
+          replyType,
+          replyValue,
+        }),
+      });
+
+      if (response.ok) {
+        alert('自动回复已修改');
+        location.replace(location.href+'#autoReplyPanel'); // 重新加载页面以显示更新后的自动回复列表
+      } else {
+        console.error('Error editing auto reply');
+      }
+    } catch (error) {
+      console.error('Error editing auto reply', error);
+    }
+  }
+ // 显示/隐藏回复类型对应的字段
+ document.getElementById('replyType').addEventListener('change', function() {
+    const textReply = document.getElementById('textReply');
+    const fileReply = document.getElementById('fileReply');
+    
+    if (this.value === 'text') {
+      textReply.style.display = 'block';
+      fileReply.style.display = 'none';
+    } else if (this.value === 'file') {
+      textReply.style.display = 'none';
+      fileReply.style.display = 'block';
+    }
+  });
+
+  // 处理保存按钮点击事件
+    // 处理保存按钮点击事件
+    document.getElementById('saveAutoReply').addEventListener('click', async function() {
+    const triggerWord = document.getElementById('triggerWord').value;
+    const replyType = document.getElementById('replyType').value;
+    let replyValue = '';
+
+    if (replyType === 'text') {
+      replyValue = document.getElementById('textValue').value;
+    } else if (replyType === 'file') {
+      const fileInput = document.getElementById('fileValue');
+      if (fileInput.files.length > 0) {
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        try {
+          const response = await fetch('/upload', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            replyValue = data.filePath;
+          } else {
+            console.error('Error uploading file');
+            return;
+          }
+        } catch (error) {
+          console.error('Error uploading file', error);
+          return;
+        }
+      }
+    }
+
+    try {
+      const response = await fetch('/add_auto_reply', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          triggerWord,
+          replyType,
+          replyValue,
+        }),
+      });
+
+      if (response.ok) {
+        alert('自动回复已保存');
+        location.replace(location.href+'#autoReplyPanel')
+        //location.reload(); // 重新加载页面以显示更新后的自动回复列表
+      } else {
+        console.error('Error saving auto reply');
+      }
+    } catch (error) {
+      console.error('Error saving auto reply', error);
+    }
+  });
+
+async function deleteUser(userId) {
+  const response = await fetch(`/delete_user?id=${userId}`, { method: 'DELETE' });
+  const data = await response.json();
+  alert(data.message);
+  location.reload();
+}
+
+    const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+  const editUserIdInput = document.getElementById('editUserId');
+  const editUsernameInput = document.getElementById('editUsername');
+  const editPasswordInput = document.getElementById('editPassword');
+
+  document.addEventListener('click', (event) => {
+    if (event.target.classList.contains('edit-user-btn')) {
+      const userId = event.target.getAttribute('data-id');
+      // 在这里通过 userId 获取用户信息并填充到弹窗表单中
+      fetch(`/edit_user?id=${userId}`)
+        .then(response => response.json())
+        .then(data => {
+          editUserIdInput.value = data._id;
+          editUsernameInput.value = data.username;
+          editPasswordInput.value = ''; // 清空密码字段，避免泄露密码
+          editModal.show(); // 显示弹窗
+        });
+    }
+  });
+
+
+  const addUserForm = document.getElementById('addUserForm');
+  addUserForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    
+    const username = addUserForm.username.value;
+    const password = addUserForm.password.value;
+    console.log(username, password)
+    const response = await fetch('/add_user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username, password })
+    });
+    console.log(response.status)
+    if(response.status==500){
+      alert("添加失败，当前已有该用户或数据库错误")
+    }else{
+      alert("添加完毕")
+      location.reload();
+    }
+    
+    // Handle response as needed
+  });
+</script>
+</body>
+</html>
